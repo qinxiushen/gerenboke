@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Settings, FileText, Tag, Lock, Save, Plus, Trash2, Edit2, X, Check, LogOut, Github, RefreshCw, Upload, User, CheckCircle, AlertCircle } from 'lucide-react';
+import { Settings, FileText, Tag, Lock, Save, Plus, Trash2, Edit2, X, Check, LogOut, GitHub, RefreshCw, Upload, User, CheckCircle, AlertCircle } from 'lucide-react';
 import Layout from '../components/Layout';
-import { Post } from '../types';
+import type { Post } from '../types';
 import {
   getPosts,
   addPost,
