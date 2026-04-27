@@ -1,0 +1,1630 @@
+<!doctype html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>我的博客</title>
+  <meta name="description" content="一个分享技术与生活的个人博客" />
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/react-markdown@9/umd/react-markdown.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23aa3bff'/%3E%3Cstop offset='100%25' stop-color='%23ec4899'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='20' fill='url(%23g)'/%3E%3Cpath d='M30 35h40M30 50h30M30 65h35' stroke='white' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            accent: '#aa3bff',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    .dark body { background-color: #16171d; }
+    .hljs { background: #1e1e1e; border-radius: 0.5rem; padding: 1rem; font-size: 0.875rem; }
+    .prose h1 { font-size: 1.875rem; font-weight: 700; color: #111827; margin: 2rem 0 1rem; }
+    .prose h2 { font-size: 1.5rem; font-weight: 600; color: #111827; margin: 1.5rem 0 0.75rem; }
+    .prose h3 { font-size: 1.25rem; font-weight: 600; color: #111827; margin: 1.25rem 0 0.5rem; }
+    .prose p { margin: 0.75rem 0; line-height: 1.8; color: #374151; }
+    .prose a { color: #7c3aed; text-decoration: underline; }
+    .prose code:not(pre code) { background: #f3f4f6; padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-size: 0.875em; font-family: 'Fira Code', monospace; color: #7c3aed; }
+    .prose pre { background: #1e1e1e; border-radius: 0.5rem; padding: 1rem; overflow-x: auto; margin: 1rem 0; }
+    .prose blockquote { border-left: 4px solid #aa3bff; padding-left: 1rem; color: #6b7280; font-style: italic; margin: 1rem 0; }
+    .prose ul, .prose ol { padding-left: 1.5rem; margin: 0.75rem 0; }
+    .prose ul { list-style-type: disc; }
+    .prose ol { list-style-type: decimal; }
+    .prose li { margin: 0.25rem 0; line-height: 1.8; color: #374151; }
+    .prose hr { border: none; border-top: 1px solid #e5e7eb; margin: 2rem 0; }
+    .prose table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    .prose th, .prose td { border: 1px solid #e5e7eb; padding: 0.5rem 1rem; text-align: left; }
+    .prose th { background: #f9fafb; font-weight: 600; }
+    .dark .prose h1, .dark .prose h2, .dark .prose h3 { color: #f3f4f6; }
+    .dark .prose p, .dark .prose li { color: #d1d5db; }
+    .dark .prose code:not(pre code) { background: #1f2937; color: #c084fc; }
+    .dark .prose blockquote { color: #9ca3af; }
+    .dark .prose th, .dark .prose td { border-color: #374151; }
+    .dark .prose th { background: #1f2937; }
+    .dark .prose hr { border-color: #374151; }
+    .dark .prose table { color: #d1d5db; }
+  </style>
+</head>
+<body class="bg-white text-gray-800 antialiased dark:bg-[#16171d] dark:text-gray-300">
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, createElement: h } = React;
+
+    // ==================== 数据 ====================
+    // ==================== 数据管理 ====================
+    const STORAGE_KEY = 'blog-posts';
+    const ADMIN_KEY = 'blog-admin';
+
+    const defaultPosts = [
+      {
+        id: '1',
+        title: 'React 18 新特性完全解析',
+        date: '2026-04-20',
+        excerpt: 'React 18 引入了并发渲染、Suspense 升级、自动批处理等重磅特性，本文带你深入理解这些变化。',
+        tags: ['React', '前端'],
+        author: '博主',
+        readingTime: 8,
+        content: `# React 18 新特性完全解析
+
+React 18 是自 React 17 以来最大的版本更新，带来了许多令人兴奋的新特性。本文将深入探讨这些新特性及其使用方法。
+
+## 并发渲染（Concurrent Rendering）
+
+并发渲染是 React 18 最重要的改进之一。它允许 React 同时准备多个版本的 UI。这意味着 React 可以：
+
+- 在不阻塞主线程的情况下渲染大型列表
+- 自动调整渲染优先级
+- 更智能地处理用户交互
+
+## Suspense 升级
+
+\`\`\`tsx
+import { Suspense } from 'react';
+import { lazy } from 'react';
+
+const HeavyComponent = lazy(() => import('./HeavyComponent'));
+
+function App() {
+  return (
+    <Suspense fallback={<div>加载中...</div>}>
+      <HeavyComponent />
+    </Suspense>
+  );
+}
+\`\`\`
+
+## 自动批处理（Automatic Batching）
+
+在 React 18 之前，只有 React 事件处理函数中的 \`setState\` 才会被批处理。现在，所有 \`setState\` 都会被自动批处理，包括 \`fetch\` 回调和 \`setTimeout\`。
+
+\`\`\`jsx
+// React 18 之前：两次渲染
+setTimeout(() => {
+  setCount(c => c + 1);
+  setFlag(f => !f);
+}, 1000);
+
+// React 18：一次渲染
+setTimeout(() => {
+  setCount(c => c + 1);
+  setFlag(f => !f);
+}, 1000);
+\`\`\`
+
+## 新的 Hooks
+
+### useId
+
+用于生成唯一的 ID：
+
+\`\`\`jsx
+function Checkbox() {
+  const id = useId();
+  return (
+    <div>
+      <input type="checkbox" id={id} />
+      <label htmlFor={id}>同意条款</label>
+    </div>
+  );
+}
+\`\`\`
+
+### useTransition
+
+用于标记非紧急更新：
+
+\`\`\`jsx
+function Search() {
+  const [isPending, startTransition] = useTransition();
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
+
+  function handleChange(e) {
+    startTransition(() => {
+      setQuery(e.target.value);
+      searchAPI(e.target.value).then(setResults);
+    });
+  }
+
+  return <input onChange={handleChange} />;
+}
+\`\`\`
+
+## 总结
+
+React 18 的这些新特性让构建高性能应用变得更加简单。并发模式虽然默认不启用，但它为 React 的未来发展奠定了坚实基础。
+
+> 建议在实际项目中逐步采用这些新特性，而不是一次性全部迁移。
+`
+      },
+      {
+        id: '2',
+        title: 'TypeScript 5.0 实用技巧总结',
+        date: '2026-04-15',
+        excerpt: 'TypeScript 5.0 带来了更智能的类型推断、装饰器标准化、性能优化等内容，来看实战技巧。',
+        tags: ['TypeScript', '前端'],
+        author: '博主',
+        readingTime: 6,
+        content: `# TypeScript 5.0 实用技巧总结
+
+TypeScript 5.0 是一个重要的里程碑版本，本文总结了几个实用的新技巧。
+
+## 装饰器（Decorators）
+
+TypeScript 5.0 标准化了 ECMAScript 装饰器：
+
+\`\`\`typescript
+function log(target: any, key: string, descriptor: PropertyDescriptor) {
+  const original = descriptor.value;
+  descriptor.value = function(...args: any[]) {
+    console.log(\`Calling \${key} with\`, args);
+    return original.apply(this, args);
+  };
+  return descriptor;
+}
+
+class Calculator {
+  @log
+  add(a: number, b: number) {
+    return a + b;
+  }
+}
+\`\`\`
+
+## const 类型参数
+
+\`\`\`typescript
+function makeTuple<T extends readonly string[]>(...args: T) {
+  return args;
+}
+
+// 推断为 [string, string, string]
+const tuple = makeTuple('a', 'b', 'c');
+\`\`\`
+
+## 更严格的检查
+
+TypeScript 5.0 增加了一些更严格的类型检查，帮助你编写更安全的代码。
+
+## 性能提升
+
+5.0 版本在编译速度上有显著提升，特别是在大型项目中。
+`
+      },
+      {
+        id: '3',
+        title: '打造高效的个人工作流',
+        date: '2026-04-10',
+        excerpt: '分享我在日常工作中使用的高效工具和工作方法，从代码编辑器到任务管理都有覆盖。',
+        tags: ['效率', '工具'],
+        author: '博主',
+        readingTime: 5,
+        content: `# 打造高效的个人工作流
+
+在这个信息爆炸的时代，高效的工作方法变得越来越重要。以下是我多年来积累的一些工作流优化经验。
+
+## 编辑器配置
+
+我的主力编辑器是 VS Code，关键配置：
+
+1. 使用 Fira Code 字体（连字功能）
+2. 配置适合自己的快捷键
+3. 常用插件：ESLint、Prettier、GitLens
+
+## 任务管理
+
+使用番茄工作法：
+- 25 分钟专注工作
+- 5 分钟休息
+- 每四个番茄钟后长休息
+
+## 代码管理
+
+- Git 分支策略：feature/fix/refactor
+- 定期 rebase，保持历史整洁
+- 善用 stash 暂存工作进度
+
+## 持续学习
+
+每天抽出 1 小时学习新技术：
+- 早上：阅读技术文章
+- 午间：刷算法题
+- 晚上：实践项目
+
+> 坚持是最高效的捷径。
+`
+      },
+      {
+        id: '4',
+        title: 'CSS Grid 布局实战指南',
+        date: '2026-04-05',
+        excerpt: 'CSS Grid 是现代 CSS 布局的重要组成部分，这篇文章通过实际案例帮助你掌握 Grid 布局。',
+        tags: ['CSS', '前端'],
+        author: '博主',
+        readingTime: 7,
+        content: `# CSS Grid 布局实战指南
+
+CSS Grid 是二维布局系统，特别适合页面整体布局。
+
+## 基础概念
+
+\`\`\`css
+.container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: auto;
+  gap: 20px;
+}
+\`\`\`
+
+## 网格区域命名
+
+\`\`\`css
+.layout {
+  display: grid;
+  grid-template-areas:
+    "header header header"
+    "sidebar main aside"
+    "footer footer footer";
+  grid-template-columns: 200px 1fr 200px;
+  grid-template-rows: auto 1fr auto;
+}
+
+.header { grid-area: header; }
+.sidebar { grid-area: sidebar; }
+.main { grid-area: main; }
+.footer { grid-area: footer; }
+\`\`\`
+
+## 响应式布局
+
+\`\`\`css
+.responsive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+\`\`\`
+
+这个技巧让你不需要媒体查询就能实现响应式布局！
+`
+      },
+      {
+        id: '5',
+        title: 'Node.js 性能优化实践',
+        date: '2026-03-28',
+        excerpt: '从内存管理、CPU 使用、I/O 优化等多个角度，探讨如何提升 Node.js 应用的性能。',
+        tags: ['Node.js', '后端'],
+        author: '博主',
+        readingTime: 10,
+        content: `# Node.js 性能优化实践
+
+Node.js 以其高性能著称，但在实际项目中仍需注意优化。以下是几个关键优化点。
+
+## 内存管理
+
+使用 \`--max-old-space-size\` 参数控制内存使用：
+
+\`\`\`bash
+node --max-old-space-size=4096 server.js
+\`\`\`
+
+定期检查内存泄漏：
+\`\`\`javascript
+setInterval(() => {
+  const used = process.memoryUsage();
+  console.log(used);
+}, 60000);
+\`\`\`
+
+## 事件循环优化
+
+避免在事件循环中执行重计算：
+
+\`\`\`javascript
+// 不好
+function heavyComputation() {
+  let result = 0;
+  for (let i = 0; i < 1000000000; i++) {
+    result += i;
+  }
+  return result;
+}
+
+// 好：使用 Worker Threads
+const { Worker } = require('worker_threads');
+\`\`\`
+
+## 连接池
+
+合理配置数据库连接池大小：
+\`\`\`javascript
+const pool = mysql.createPool({
+  connectionLimit: 20,
+  waitForConnections: true,
+  queueLimit: 0
+});
+\`\`\`
+
+## 缓存策略
+
+使用 Redis 缓存热点数据，减少数据库压力。
+`
+      },
+      {
+        id: '6',
+        title: 'Git 进阶：掌握高级命令',
+        date: '2026-03-20',
+        excerpt: '除了 add、commit、push 之外，Git 还有许多强大但鲜为人知的命令，来看看有哪些。',
+        tags: ['Git', '工具'],
+        author: '博主',
+        readingTime: 4,
+        content: `# Git 进阶：掌握高级命令
+
+Git 的日常命令大家都会用，但还有一些进阶命令非常有用。
+
+## git reflog
+
+恢复误删的提交：
+\`\`\`bash
+git reflog
+# 找到误删提交的 hash
+git checkout <hash>
+\`\`\`
+
+## git bisect
+
+二分查找 bug：
+\`\`\`bash
+git bisect start
+git bisect bad
+git bisect good <good-commit-hash>
+# Git 会自动 checkout 中间版本测试
+# 标记 good 或 bad
+git bisect reset
+\`\`\`
+
+## git stash push
+
+ stash 特定文件：
+\`\`\`bash
+git stash push -m "temp fix" src/utils.js
+\`\`\`
+
+## git log --since
+
+查看最近一周的提交：
+\`\`\`bash
+git log --since="1 week ago" --oneline
+\`\`\`
+
+## git cherry-pick
+
+挑选特定提交：
+\`\`\`bash
+git cherry-pick <commit-hash>
+\`\`\`
+
+掌握这些命令，让你的 Git 技能更上一层楼！
+`
+      },
+      {
+        id: '7',
+        title: 'Docker 容器化部署完全指南',
+        date: '2026-03-15',
+        excerpt: '从 Dockerfile 编写到 Docker Compose 编排，详细讲解如何将应用容器化部署。',
+        tags: ['Docker', 'DevOps'],
+        author: '博主',
+        readingTime: 9,
+        content: `# Docker 容器化部署完全指南
+
+容器化已成为现代应用部署的标准方式，本文详细介绍 Docker 的使用方法。
+
+## Dockerfile 编写
+
+\`\`\`dockerfile
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/nginx.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+\`\`\`
+
+## Docker Compose 编排
+
+\`\`\`yaml
+version: '3.8'
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:alpine
+
+volumes:
+  postgres_data:
+\`\`\`
+
+## 常用命令
+
+| 命令 | 说明 |
+|------|------|
+| docker build | 构建镜像 |
+| docker run | 运行容器 |
+| docker-compose up | 启动服务 |
+| docker logs | 查看日志 |
+
+## 最佳实践
+
+1. 使用多阶段构建减小镜像体积
+2. 不要用 root 用户运行容器
+3. 使用 .dockerignore 排除无关文件
+`
+      },
+      {
+        id: '8',
+        title: '算法面试高频题型总结',
+        date: '2026-03-08',
+        excerpt: '整理了算法面试中最常见的题型和解题思路，帮助你在面试中游刃有余。',
+        tags: ['算法', '面试'],
+        author: '博主',
+        readingTime: 12,
+        content: `# 算法面试高频题型总结
+
+算法面试是很多公司招聘的必考环节，这里总结一下高频题型。
+
+## 双指针
+
+适合有序数组去重、两数之和等问题：
+\`\`\`typescript
+function twoSum(nums: number[], target: number): number[] {
+  let left = 0, right = nums.length - 1;
+  while (left < right) {
+    const sum = nums[left] + nums[right];
+    if (sum === target) return [left, right];
+    if (sum < target) left++;
+    else right--;
+  }
+  return [];
+}
+\`\`\`
+
+## 滑动窗口
+
+适合子串、子数组问题：
+\`\`\`typescript
+function maxSubarraySum(arr: number[], k: number): number {
+  let windowSum = 0;
+  for (let i = 0; i < k; i++) windowSum += arr[i];
+  let maxSum = windowSum;
+
+  for (let i = k; i < arr.length; i++) {
+    windowSum += arr[i] - arr[i - k];
+    maxSum = Math.max(maxSum, windowSum);
+  }
+  return maxSum;
+}
+\`\`\`
+
+## 动态规划
+
+经典问题：爬楼梯、背包问题、LIS 等。
+
+关键点：
+1. 定义 dp[i] 的含义
+2. 找到状态转移方程
+3. 确定初始值和遍历顺序
+
+> 面试前多刷题，形成肌肉记忆。
+`
+      }
+    ];
+
+    // 加载/保存数据
+    const loadPosts = () => {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return saved ? JSON.parse(saved) : defaultPosts;
+      } catch { return defaultPosts; }
+    };
+
+    const savePosts = (posts) => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+    };
+
+    const allTags = ['React', 'TypeScript', 'CSS', '前端', 'Node.js', '后端', 'Git', '工具', '效率', 'Docker', 'DevOps', '算法', '面试'];
+
+    // ==================== 图标组件 ====================
+    const Icon = ({ name, size = 20, className = '' }) => {
+      const icons = {
+        pen: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>,
+        home: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+        tag: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>,
+        user: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+        calendar: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+        clock: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+        arrowRight: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>,
+        arrowLeft: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>,
+        moon: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>,
+        sun: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>,
+        heart: <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="none" className={className}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
+        github: <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="none" className={className}><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>,
+        mail: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
+        code: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>,
+        terminal: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>,
+        coffee: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>,
+        settings: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
+        plus: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+        edit: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
+        trash: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>,
+        lock: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
+        logout: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
+        check: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>,
+        x: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+        save: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>,
+        eye: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>,
+      };
+      return icons[name] || null;
+    };
+
+    // ==================== Markdown 渲染 ====================
+    const MarkdownContent = ({ content }) => {
+      useEffect(() => {
+        if (window.hljs) {
+          document.querySelectorAll('pre code').forEach((block) => {
+            window.hljs.highlightElement(block);
+          });
+        }
+      }, [content]);
+
+      const renderMarkdown = (text) => {
+        const lines = text.split('\n');
+        const result = [];
+        let i = 0;
+        let inCodeBlock = false;
+        let codeLines = [];
+        let codeLang = '';
+        let inTable = false;
+        let tableRows = [];
+
+        while (i < lines.length) {
+          const line = lines[i];
+
+          // 代码块
+          if (line.startsWith('```')) {
+            if (!inCodeBlock) {
+              inCodeBlock = true;
+              codeLang = line.slice(3).trim();
+              codeLines = [];
+            } else {
+              inCodeBlock = false;
+              result.push(h('pre', { key: `pre-${i}`, className: 'rounded-lg overflow-x-auto text-sm my-4' },
+                h('code', { className: `language-${codeLang}`, key: codeLang }, codeLines.join('\n'))
+              ));
+              codeLines = [];
+            }
+            i++;
+            continue;
+          }
+
+          if (inCodeBlock) {
+            codeLines.push(line);
+            i++;
+            continue;
+          }
+
+          // 表格
+          if (line.includes('|') && line.trim().startsWith('|')) {
+            const cells = line.split('|').filter(c => c.trim() !== '').map(c => c.trim());
+            if (cells.every(c => /^-+$/.test(c))) {
+              i++;
+              continue;
+            }
+            tableRows.push(cells);
+            i++;
+            continue;
+          } else if (inTable) {
+            result.push(
+              h('table', { key: `table-${i}`, className: 'w-full border-collapse my-4 text-sm' },
+                h('tbody', null,
+                  tableRows.map((row, ri) =>
+                    h('tr', { key: ri, className: ri === 0 ? 'font-semibold' : '' },
+                      row.map((cell, ci) =>
+                        ri === 0
+                          ? h('th', { key: ci, className: 'border border-gray-300 dark:border-gray-700 px-4 py-2 text-left bg-gray-50 dark:bg-gray-800' }, cell)
+                          : h('td', { key: ci, className: 'border border-gray-300 dark:border-gray-700 px-4 py-2' }, cell)
+                      )
+                    )
+                  )
+                )
+              )
+            );
+            tableRows = [];
+            inTable = false;
+            continue;
+          }
+
+          // 标题
+          if (line.startsWith('# ')) {
+            result.push(h('h1', { key: `h1-${i}`, className: 'text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4 mt-8' }, line.slice(2)));
+            i++; continue;
+          }
+          if (line.startsWith('## ')) {
+            result.push(h('h2', { key: `h2-${i}`, className: 'text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-3 mt-6' }, line.slice(3)));
+            i++; continue;
+          }
+          if (line.startsWith('### ')) {
+            result.push(h('h3', { key: `h3-${i}`, className: 'text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2 mt-5' }, line.slice(4)));
+            i++; continue;
+          }
+          if (line.startsWith('#### ')) {
+            result.push(h('h4', { key: `h4-${i}`, className: 'text-lg font-medium text-gray-900 dark:text-gray-100 mb-2 mt-4' }, line.slice(5)));
+            i++; continue;
+          }
+
+          // 引用
+          if (line.startsWith('> ')) {
+            result.push(h('blockquote', { key: `quote-${i}`, className: 'border-l-4 border-purple-500 pl-4 italic text-gray-500 dark:text-gray-400 my-4' }, line.slice(2)));
+            i++; continue;
+          }
+
+          // 分割线
+          if (line.match(/^---+$/)) {
+            result.push(h('hr', { key: `hr-${i}`, className: 'my-8 border-gray-300 dark:border-gray-700' }));
+            i++; continue;
+          }
+
+          // 列表
+          if (line.match(/^[-*] /)) {
+            const items = [];
+            while (i < lines.length && lines[i].match(/^[-*] /)) {
+              items.push(h('li', { key: i }, renderInline(lines[i].slice(2))));
+              i++;
+            }
+            result.push(h('ul', { key: `ul-${i}`, className: 'list-disc list-inside mb-4 space-y-1' }, items));
+            continue;
+          }
+          if (line.match(/^\d+\. /)) {
+            const items = [];
+            while (i < lines.length && lines[i].match(/^\d+\. /)) {
+              items.push(h('li', { key: i }, renderInline(lines[i].replace(/^\d+\. /, ''))));
+              i++;
+            }
+            result.push(h('ol', { key: `ol-${i}`, className: 'list-decimal list-inside mb-4 space-y-1' }, items));
+            continue;
+          }
+
+          // 空行
+          if (line.trim() === '') {
+            i++; continue;
+          }
+
+          // 段落
+          result.push(h('p', { key: `p-${i}`, className: 'mb-4 leading-relaxed' }, renderInline(line)));
+          i++;
+        }
+
+        return result;
+      };
+
+      const renderInline = (text) => {
+        const parts = [];
+        let remaining = text;
+
+        while (remaining.length > 0) {
+          // 行内代码
+          const codeMatch = remaining.match(/`([^`]+)`/);
+          if (codeMatch && codeMatch.index !== undefined) {
+            if (codeMatch.index > 0) {
+              parts.push(remaining.slice(0, codeMatch.index));
+            }
+            parts.push(h('code', { key: `code-${codeMatch.index}`, className: 'bg-gray-100 dark:bg-gray-800 text-purple-600 dark:text-purple-400 px-1.5 py-0.5 rounded text-sm font-mono' }, codeMatch[1]));
+            remaining = remaining.slice(codeMatch.index + codeMatch[0].length);
+            continue;
+          }
+          // 加粗
+          const boldMatch = remaining.match(/\*\*([^*]+)\*\*/);
+          if (boldMatch && boldMatch.index !== undefined) {
+            if (boldMatch.index > 0) {
+              parts.push(remaining.slice(0, boldMatch.index));
+            }
+            parts.push(h('strong', { key: `bold-${boldMatch.index}` }, boldMatch[1]));
+            remaining = remaining.slice(boldMatch.index + boldMatch[0].length);
+            continue;
+          }
+          // 链接
+          const linkMatch = remaining.match(/\[([^\]]+)\]\(([^)]+)\)/);
+          if (linkMatch && linkMatch.index !== undefined) {
+            if (linkMatch.index > 0) {
+              parts.push(remaining.slice(0, linkMatch.index));
+            }
+            parts.push(h('a', { key: `link-${linkMatch.index}`, href: linkMatch[2], target: '_blank', rel: 'noopener noreferrer', className: 'text-purple-600 dark:text-purple-400 hover:underline' }, linkMatch[1]));
+            remaining = remaining.slice(linkMatch.index + linkMatch[0].length);
+            continue;
+          }
+          // 普通文本
+          parts.push(remaining);
+          break;
+        }
+
+        return parts;
+      };
+
+      return h('div', { className: 'prose' }, renderMarkdown(content));
+    };
+
+    // ==================== 组件 ====================
+    const Header = ({ page, onNavigate, dark, onToggleDark }) => {
+      const navItems = [
+        { id: 'home', label: '首页', icon: 'home' },
+        { id: 'tags', label: '标签', icon: 'tag' },
+        { id: 'about', label: '关于', icon: 'user' },
+      ];
+
+      return h('header', { className: 'sticky top-0 z-50 bg-white/80 dark:bg-[#16171d]/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800' },
+        h('div', { className: 'max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between' },
+          h('button', {
+            onClick: () => onNavigate('home'),
+            className: 'flex items-center gap-2 group'
+          },
+            h('div', { className: 'w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-md' },
+              h(Icon, { name: 'pen', size: 20, className: 'text-white' })
+            ),
+            h('span', { className: 'text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent' }, '我的博客')
+          ),
+          h('div', { className: 'flex items-center gap-1' },
+            navItems.map(({ id, label, icon }) =>
+              h('button', {
+                key: id,
+                onClick: () => onNavigate(id),
+                className: `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${page === id
+                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`
+              },
+                h(Icon, { name: icon, size: 16 }),
+                h('span', { className: 'hidden sm:inline' }, label)
+              )
+            ),
+            h('button', {
+              onClick: onToggleDark,
+              className: 'ml-2 p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors',
+              'aria-label': '切换主题'
+            },
+              h(Icon, { name: dark ? 'sun' : 'moon', size: 20 })
+            )
+          )
+        )
+      );
+    };
+
+    const Footer = () =>
+      h('footer', { className: 'mt-auto border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#16171d]' },
+        h('div', { className: 'max-w-5xl mx-auto px-4 sm:px-6 py-8' },
+          h('div', { className: 'flex flex-col sm:flex-row items-center justify-between gap-4' },
+            h('p', { className: 'text-sm text-gray-500 dark:text-gray-500 flex items-center gap-1' },
+              h('span', null, 'Built with'),
+              h(Icon, { name: 'heart', size: 14, className: 'text-red-500 mx-0.5' }),
+              h('span', null, `\u00A9 ${new Date().getFullYear()} 我的博客`)
+            ),
+            h('div', { className: 'flex items-center gap-4' },
+              h('a', {
+                href: 'https://github.com',
+                target: '_blank',
+                rel: 'noopener noreferrer',
+                className: 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors',
+                'aria-label': 'GitHub'
+              }, h(Icon, { name: 'github', size: 20 }))
+            )
+          )
+        )
+      );
+
+    const TagChip = ({ tag, onClick }) =>
+      h('button', {
+        onClick,
+        className: 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors cursor-pointer'
+      }, tag);
+
+    // ==================== 页面 ====================
+    const HomePage = ({ onNavigate, posts }) =>
+      h('div', null,
+        h('section', { className: 'max-w-5xl mx-auto px-4 sm:px-6 py-16 text-center' },
+          h('h1', { className: 'text-4xl sm:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-4' }, '欢迎来到我的博客'),
+          h('p', { className: 'text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto' },
+            '分享技术与生活，记录成长与思考。在这里，你可以找到关于前端开发、后端架构、效率工具等方面的文章。'
+          )
+        ),
+        h('section', { className: 'max-w-5xl mx-auto px-4 sm:px-6 pb-20' },
+          h('h2', { className: 'text-2xl font-bold text-gray-900 dark:text-gray-100 mb-8 flex items-center gap-2' },
+            h('span', { className: 'w-1 h-6 bg-purple-500 rounded-full' }),
+            '最新文章'
+          ),
+          h('div', { className: 'grid gap-6' },
+            posts.map(post =>
+              h('article', {
+                key: post.id,
+                className: 'bg-white dark:bg-[#1e2028] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-purple-300 dark:hover:border-purple-700 p-6 transition-all group'
+              },
+                h('div', { className: 'flex flex-col sm:flex-row sm:items-start gap-4' },
+                  h('div', { className: 'flex-1 min-w-0' },
+                    h('div', { className: 'flex flex-wrap gap-2 mb-3' },
+                      post.tags.map(tag =>
+                        h(TagChip, { key: tag, tag, onClick: () => onNavigate('tags', tag) })
+                      )
+                    ),
+                    h('h3', { className: 'text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2 cursor-pointer hover:text-purple-600 dark:hover:text-purple-400 transition-colors' },
+                      h('span', { onClick: () => onNavigate('post', post.id) }, post.title)
+                    ),
+                    h('p', { className: 'text-gray-600 dark:text-gray-400 mb-4 line-clamp-2' }, post.excerpt),
+                    h('div', { className: 'flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-500' },
+                      h('span', { className: 'flex items-center gap-1.5' }, h(Icon, { name: 'calendar', size: 14 }), post.date),
+                      h('span', { className: 'flex items-center gap-1.5' }, h(Icon, { name: 'clock', size: 14 }), `${post.readingTime} 分钟阅读`)
+                    )
+                  ),
+                  h('div', { className: 'sm:self-center' },
+                    h('button', {
+                      onClick: () => onNavigate('post', post.id),
+                      className: 'inline-flex items-center gap-1 text-purple-600 dark:text-purple-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity'
+                    },
+                      '阅读全文',
+                      h(Icon, { name: 'arrowRight', size: 14 })
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      );
+
+    const PostPage = ({ postId, onBack, onNavigate, posts }) => {
+      const post = posts.find(p => p.id === postId);
+      if (!post) {
+        return h('div', { className: 'max-w-3xl mx-auto px-4 sm:px-6 py-20 text-center' },
+          h('h1', { className: 'text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4' }, '文章不存在'),
+          h('button', {
+            onClick: onBack,
+            className: 'inline-flex items-center gap-2 text-purple-600 dark:text-purple-400 hover:underline'
+          }, h(Icon, { name: 'arrowLeft', size: 16 }), '返回首页')
+        );
+      }
+
+      return h('article', { className: 'max-w-3xl mx-auto px-4 sm:px-6 py-10' },
+        h('button', {
+          onClick: onBack,
+          className: 'mb-8 inline-flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors'
+        }, h(Icon, { name: 'arrowLeft', size: 16 }), '返回'),
+        h('div', { className: 'flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-500 mb-6' },
+          h('span', { className: 'flex items-center gap-1.5' }, h(Icon, { name: 'calendar', size: 14 }), post.date),
+          h('span', { className: 'flex items-center gap-1.5' }, h(Icon, { name: 'clock', size: 14 }), `${post.readingTime} 分钟阅读`)
+        ),
+        h('div', { className: 'flex flex-wrap gap-2 mb-8' },
+          post.tags.map(tag =>
+            h(TagChip, { key: tag, tag, onClick: () => onNavigate('tags', tag) })
+          )
+        ),
+        h('h1', { className: 'text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-8 leading-tight' }, post.title),
+        h('div', { className: 'h-px bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 opacity-30 mb-10' }),
+        h(MarkdownContent, { key: post.id, content: post.content }),
+        h('div', { className: 'mt-16 pt-8 border-t border-gray-200 dark:border-gray-800' },
+          h('button', {
+            onClick: onBack,
+            className: 'inline-flex items-center gap-2 text-purple-600 dark:text-purple-400 hover:underline font-medium'
+          }, h(Icon, { name: 'arrowLeft', size: 16 }), '返回文章列表')
+        )
+      );
+    };
+
+    const TagsPage = ({ selectedTag, onSelectTag, onNavigate, posts }) => {
+      const tagCounts = allTags.reduce((acc, tag) => {
+        acc[tag] = posts.filter(p => p.tags.includes(tag)).length;
+        return acc;
+      }, {});
+
+      const filteredPosts = selectedTag
+        ? posts.filter(p => p.tags.includes(selectedTag))
+        : [];
+
+      return h('div', { className: 'max-w-5xl mx-auto px-4 sm:px-6 py-12' },
+        h('h1', { className: 'text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8 flex items-center gap-3' },
+          h('div', { className: 'w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center' },
+            h(Icon, { name: 'tag', size: 20, className: 'text-white' })
+          ),
+          '标签分类'
+        ),
+        !selectedTag && h('div', { className: 'mb-12' },
+          h('p', { className: 'text-gray-600 dark:text-gray-400 mb-6' }, '点击任意标签，查看该分类下的所有文章'),
+          h('div', { className: 'flex flex-wrap gap-3' },
+            allTags.map(tag =>
+              h('button', {
+                key: tag,
+                onClick: () => onSelectTag(tag),
+                className: 'inline-flex items-center px-4 py-2 rounded-full text-base font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors cursor-pointer'
+              },
+                tag,
+                h('span', { className: 'ml-2 text-xs opacity-70' }, `(${tagCounts[tag]})`)
+              )
+            )
+          )
+        ),
+        selectedTag && h('div', null,
+          h('button', {
+            onClick: () => onSelectTag(null),
+            className: 'mb-6 inline-flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors'
+          }, h(Icon, { name: 'arrowLeft', size: 16 }), '返回标签列表'),
+          h('div', { className: 'mb-6 flex items-center gap-3' },
+            h('button', { className: 'inline-flex items-center px-4 py-2 rounded-full text-lg font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' },
+              h(Icon, { name: 'tag', size: 16, className: 'mr-2' }),
+              selectedTag
+            ),
+            h('span', { className: 'text-gray-500 dark:text-gray-500' }, `共 ${filteredPosts.length} 篇文章`)
+          ),
+          h('div', { className: 'grid gap-5' },
+            filteredPosts.map(post =>
+              h('article', {
+                key: post.id,
+                className: 'bg-white dark:bg-[#1e2028] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 hover:shadow-md hover:border-purple-300 dark:hover:border-purple-700 transition-all cursor-pointer'
+              },
+                h('div', { className: 'flex items-start justify-between gap-4' },
+                  h('div', { className: 'flex-1 min-w-0' },
+                    h('h3', { className: 'text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 hover:text-purple-600 dark:hover:text-purple-400 transition-colors' },
+                      h('span', { onClick: () => onNavigate('post', post.id) }, post.title)
+                    ),
+                    h('p', { className: 'text-gray-600 dark:text-gray-400 text-sm mb-3 line-clamp-2' }, post.excerpt),
+                    h('div', { className: 'flex items-center gap-4 text-xs text-gray-500 dark:text-gray-500' },
+                      h('span', null, post.date),
+                      h('span', null, `${post.readingTime} 分钟阅读`)
+                    )
+                  ),
+                  h('button', {
+                    onClick: () => onNavigate('post', post.id),
+                    className: 'text-purple-600 dark:text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0'
+                  }, h(Icon, { name: 'arrowRight', size: 20 }))
+                )
+              )
+            )
+          )
+        )
+      );
+    };
+
+    const AboutPage = () => {
+      const skills = [
+        { icon: 'code', name: '前端开发', desc: 'React / Vue / TypeScript' },
+        { icon: 'terminal', name: '后端开发', desc: 'Node.js / Python / Go' },
+        { icon: 'coffee', name: '效率工具', desc: 'Git / Docker / CI/CD' },
+      ];
+
+      return h('div', { className: 'max-w-3xl mx-auto px-4 sm:px-6 py-12' },
+        h('div', { className: 'flex flex-col items-center text-center mb-12' },
+          h('div', { className: 'w-28 h-28 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-4xl font-bold text-white mb-6 shadow-xl' }, 'B'),
+          h('h1', { className: 'text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2' }, '博主'),
+          h('p', { className: 'text-gray-500 dark:text-gray-500' }, '全栈开发 / 技术写作者')
+        ),
+        h('section', { className: 'mb-12' },
+          h('h2', { className: 'text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-200 dark:border-gray-800' }, '关于我'),
+          h('div', { className: 'space-y-4 text-gray-600 dark:text-gray-400 leading-relaxed' },
+            h('p', null, '你好！我是一名热爱技术的全栈开发者，目前专注于 Web 前端开发和 DevOps 相关工作。'),
+            h('p', null, '我喜欢通过写博客来记录学习心得、整理知识体系，同时也希望能帮助到有同样兴趣的开发者。'),
+            h('p', null, '在工作之余，我也会研究一些效率工具和新技术，努力让自己成为更好的工程师。')
+          )
+        ),
+        h('section', { className: 'mb-12' },
+          h('h2', { className: 'text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-200 dark:border-gray-800' }, '技术栈'),
+          h('div', { className: 'grid sm:grid-cols-3 gap-4' },
+            skills.map(({ icon, name, desc }) =>
+              h('div', {
+                key: name,
+                className: 'bg-white dark:bg-[#1e2028] rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center hover:border-purple-300 dark:hover:border-purple-700 transition-colors'
+              },
+                h('div', { className: 'w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mx-auto mb-3' },
+                  h(Icon, { name: icon, size: 20, className: 'text-purple-600 dark:text-purple-400' })
+                ),
+                h('h3', { className: 'font-medium text-gray-900 dark:text-gray-100 mb-1' }, name),
+                h('p', { className: 'text-sm text-gray-500 dark:text-gray-500' }, desc)
+              )
+            )
+          )
+        ),
+        h('section', { className: 'mb-12' },
+          h('h2', { className: 'text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-200 dark:border-gray-800' }, '联系方式'),
+          h('div', { className: 'flex flex-wrap gap-4' },
+            h('a', {
+              href: 'https://github.com',
+              target: '_blank',
+              rel: 'noopener noreferrer',
+              className: 'inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors'
+            }, h(Icon, { name: 'github', size: 16 }), 'GitHub'),
+            h('a', {
+              href: 'mailto:hello@example.com',
+              className: 'inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:text-red-500 transition-colors'
+            }, h(Icon, { name: 'mail', size: 16 }), '邮箱')
+          )
+        ),
+        h('div', { className: 'text-center py-8 border-t border-gray-200 dark:border-gray-800' },
+          h('p', { className: 'text-gray-500 dark:text-gray-500 text-sm flex items-center justify-center gap-1' },
+            '用',
+            h(Icon, { name: 'heart', size: 14, className: 'text-red-500' }),
+            '打造'
+          )
+        )
+      );
+    };
+
+    // ==================== 后台管理页面 ====================
+    const AdminPage = ({ onLogout, posts, setPosts, allTags, onNavigate }) => {
+      const [tab, setTab] = useState('posts');
+      const [editingPost, setEditingPost] = useState(null);
+      const [showEditor, setShowEditor] = useState(false);
+      const [deleteConfirm, setDeleteConfirm] = useState(null);
+      const [newTag, setNewTag] = useState('');
+      const [customTags, setCustomTags] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('blog-custom-tags') || '[]'); }
+        catch { return []; }
+      });
+      const [form, setForm] = useState({
+        title: '', date: '', excerpt: '', content: '', tags: [], author: '博主', readingTime: 1
+      });
+
+      const [loginPassword, setLoginPassword] = useState('');
+      const [loginError, setLoginError] = useState(false);
+      const [adminPassword, setAdminPassword] = useState(() => {
+        return localStorage.getItem(ADMIN_KEY) || 'admin123';
+      });
+      const [showSetPwd, setShowSetPwd] = useState(false);
+      const [newPwd, setNewPwd] = useState('');
+      const [currentPwd, setCurrentPwd] = useState('');
+      const [confirmPwd, setConfirmPwd] = useState('');
+      const [pwdError, setPwdError] = useState('');
+
+      const effectiveTags = [...allTags, ...customTags];
+
+      const calcReadingTime = (text) => Math.max(1, Math.ceil(text.length / 1000));
+
+      const openEditor = (post = null) => {
+        if (post) {
+          setForm({ ...post });
+          setEditingPost(post.id);
+        } else {
+          const today = new Date().toISOString().split('T')[0];
+          setForm({ title: '', date: today, excerpt: '', content: '', tags: [], author: '博主', readingTime: 1 });
+          setEditingPost(null);
+        }
+        setShowEditor(true);
+      };
+
+      const handleSave = () => {
+        if (!form.title.trim() || !form.content.trim()) return;
+        const post = {
+          ...form,
+          id: editingPost || Date.now().toString(),
+          readingTime: calcReadingTime(form.content)
+        };
+        let updated;
+        if (editingPost) {
+          updated = posts.map(p => p.id === editingPost ? post : p);
+        } else {
+          updated = [post, ...posts];
+        }
+        updated.sort((a, b) => new Date(b.date) - new Date(a.date));
+        setPosts(updated);
+        savePosts(updated);
+        setShowEditor(false);
+      };
+
+      const handleDelete = (id) => {
+        const updated = posts.filter(p => p.id !== id);
+        setPosts(updated);
+        savePosts(updated);
+        setDeleteConfirm(null);
+      };
+
+      const handleAddTag = () => {
+        const tag = newTag.trim();
+        if (!tag || customTags.includes(tag) || allTags.includes(tag)) return;
+        const updated = [...customTags, tag];
+        setCustomTags(updated);
+        localStorage.setItem('blog-custom-tags', JSON.stringify(updated));
+        setNewTag('');
+      };
+
+      const handleDeleteTag = (tag) => {
+        const updated = customTags.filter(t => t !== tag);
+        setCustomTags(updated);
+        localStorage.setItem('blog-custom-tags', JSON.stringify(updated));
+      };
+
+      const handleSetPassword = () => {
+        setPwdError('');
+        // 验证当前密码
+        if (currentPwd !== adminPassword) {
+          setPwdError('当前密码错误');
+          return;
+        }
+        // 验证新密码长度
+        if (newPwd.length < 6) {
+          setPwdError('新密码至少6位');
+          return;
+        }
+        // 验证确认密码
+        if (newPwd !== confirmPwd) {
+          setPwdError('两次密码不一致');
+          return;
+        }
+        localStorage.setItem(ADMIN_KEY, newPwd);
+        setAdminPassword(newPwd);
+        setShowSetPwd(false);
+        setNewPwd('');
+        setCurrentPwd('');
+        setConfirmPwd('');
+      };
+
+      const toggleFormTag = (tag) => {
+        const tags = form.tags.includes(tag)
+          ? form.tags.filter(t => t !== tag)
+          : [...form.tags, tag];
+        setForm({ ...form, tags });
+      };
+
+      // 登录验证
+      const handleLogin = (e) => {
+        e.preventDefault();
+        if (loginPassword === adminPassword) {
+          localStorage.setItem('blog-logged-in', 'true');
+          setLoginError(false);
+          setLoginPassword('');
+        } else {
+          setLoginError(true);
+        }
+      };
+
+      const isLoggedIn = () => localStorage.getItem('blog-logged-in') === 'true';
+
+      if (!isLoggedIn()) {
+        return h('div', { className: 'max-w-md mx-auto px-4 py-20' },
+          h('div', { className: 'bg-white dark:bg-[#1e2028] rounded-2xl border border-gray-200 dark:border-gray-700 p-8 shadow-lg' },
+            h('div', { className: 'text-center mb-8' },
+              h('div', { className: 'w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-4 shadow-lg' },
+                h(Icon, { name: 'lock', size: 28, className: 'text-white' })
+              ),
+              h('h1', { className: 'text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2' }, '后台登录'),
+              h('p', { className: 'text-gray-500 dark:text-gray-500 text-sm' }, '输入密码以访问管理后台')
+            ),
+            h('form', { onSubmit: handleLogin },
+              h('div', { className: 'mb-4' },
+                h('input', {
+                  type: 'password',
+                  value: loginPassword,
+                  onChange: (e) => { setLoginPassword(e.target.value); setLoginError(false); },
+                  placeholder: '输入管理员密码',
+                  className: `w-full px-4 py-3 rounded-xl border bg-gray-50 dark:bg-[#16171d] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 ${loginError ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'}`,
+                }),
+                loginError && h('p', { className: 'text-red-500 text-sm mt-2' }, '密码错误，请重试')
+              ),
+              h('button', {
+                type: 'submit',
+                className: 'w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold hover:opacity-90 transition-opacity'
+              }, '登录')
+            ),
+            h('button', {
+              onClick: () => setShowSetPwd(true),
+              className: 'mt-4 text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+            }, '修改密码')
+          ),
+          showSetPwd && h('div', { className: 'fixed inset-0 bg-black/50 flex items-center justify-center z-50' },
+            h('div', { className: 'bg-white dark:bg-[#1e2028] rounded-2xl p-6 w-80 shadow-xl' },
+              h('h3', { className: 'text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4' }, '设置新密码'),
+              h('input', {
+                type: 'password',
+                value: currentPwd,
+                onChange: (e) => { setCurrentPwd(e.target.value); setPwdError(''); },
+                placeholder: '当前密码',
+                className: 'w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#16171d] text-gray-900 dark:text-gray-100 mb-3 focus:outline-none focus:ring-2 focus:ring-purple-500'
+              }),
+              h('input', {
+                type: 'password',
+                value: newPwd,
+                onChange: (e) => { setNewPwd(e.target.value); setPwdError(''); },
+                placeholder: '新密码（6位以上）',
+                className: 'w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#16171d] text-gray-900 dark:text-gray-100 mb-3 focus:outline-none focus:ring-2 focus:ring-purple-500'
+              }),
+              h('input', {
+                type: 'password',
+                value: confirmPwd,
+                onChange: (e) => { setConfirmPwd(e.target.value); setPwdError(''); },
+                placeholder: '确认新密码',
+                className: 'w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#16171d] text-gray-900 dark:text-gray-100 mb-3 focus:outline-none focus:ring-2 focus:ring-purple-500'
+              }),
+              pwdError && h('p', { className: 'text-red-500 text-sm mb-3' }, pwdError),
+              h('div', { className: 'flex gap-2' },
+                h('button', {
+                  onClick: handleSetPassword,
+                  className: 'flex-1 py-2 rounded-xl bg-purple-500 text-white font-medium hover:bg-purple-600'
+                }, '确认'),
+                h('button', {
+                  onClick: () => { setShowSetPwd(false); setNewPwd(''); setCurrentPwd(''); setConfirmPwd(''); setPwdError(''); },
+                  className: 'flex-1 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400'
+                }, '取消')
+              )
+            )
+          )
+        );
+      }
+
+      return h('div', { className: 'max-w-5xl mx-auto px-4 sm:px-6 py-10' },
+        // 顶部栏
+        h('div', { className: 'flex items-center justify-between mb-8' },
+          h('h1', { className: 'text-2xl font-bold text-gray-900 dark:text-gray-100' }, '博客管理后台'),
+          h('div', { className: 'flex gap-2' },
+            h('button', {
+              onClick: () => onNavigate('home'),
+              className: 'flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+            }, h(Icon, { name: 'eye', size: 16 }), '预览'),
+            h('button', {
+              onClick: () => { localStorage.removeItem('blog-logged-in'); onLogout(); },
+              className: 'flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+            }, h(Icon, { name: 'logout', size: 16 }), '退出')
+          )
+        ),
+
+        // Tab 切换
+        h('div', { className: 'flex gap-1 mb-6 bg-gray-100 dark:bg-[#1e2028] p-1 rounded-xl w-fit' },
+          [{ id: 'posts', label: '文章管理' }, { id: 'tags', label: '标签管理' }].map(t =>
+            h('button', {
+              key: t.id,
+              onClick: () => setTab(t.id),
+              className: `px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === t.id ? 'bg-white dark:bg-[#2a2d38] text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`
+            }, t.label)
+          )
+        ),
+
+        // 文章管理
+        tab === 'posts' && h('div', null,
+          h('div', { className: 'flex justify-end mb-4' },
+            h('button', {
+              onClick: () => openEditor(),
+              className: 'flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:opacity-90 transition-opacity shadow-md'
+            }, h(Icon, { name: 'plus', size: 16 }), '新建文章')
+          ),
+          h('div', { className: 'space-y-3' },
+            posts.length === 0 && h('p', { className: 'text-center text-gray-400 py-12' }, '暂无文章，点击上方按钮新建'),
+            posts.map(post =>
+              h('div', {
+                key: post.id,
+                className: 'bg-white dark:bg-[#1e2028] rounded-xl border border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between gap-4'
+              },
+                h('div', { className: 'flex-1 min-w-0' },
+                  h('h3', { className: 'font-semibold text-gray-900 dark:text-gray-100 truncate' }, post.title),
+                  h('div', { className: 'flex items-center gap-3 mt-1' },
+                    h('span', { className: 'text-xs text-gray-400' }, post.date),
+                    h('span', { className: 'text-xs text-gray-400' }, `${post.readingTime} 分钟`),
+                    h('div', { className: 'flex gap-1 flex-wrap' },
+                      post.tags.slice(0, 3).map(tag =>
+                        h('span', { key: tag, className: 'text-xs px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' }, tag)
+                      )
+                    )
+                  )
+                ),
+                h('div', { className: 'flex gap-2 flex-shrink-0' },
+                  h('button', {
+                    onClick: () => openEditor(post),
+                    className: 'p-2 rounded-lg text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20'
+                  }, h(Icon, { name: 'edit', size: 16 })),
+                  h('button', {
+                    onClick: () => setDeleteConfirm(post),
+                    className: 'p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+                  }, h(Icon, { name: 'trash', size: 16 }))
+                )
+              )
+            )
+          )
+        ),
+
+        // 标签管理
+        tab === 'tags' && h('div', null,
+          h('div', { className: 'mb-6' },
+            h('h3', { className: 'text-sm font-medium text-gray-500 dark:text-gray-500 mb-3' }, '内置标签（不可删除）'),
+            h('div', { className: 'flex flex-wrap gap-2' },
+              allTags.map(tag =>
+                h('span', { key: tag, className: 'px-3 py-1.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm' }, tag)
+              )
+            )
+          ),
+          h('div', { className: 'mb-6' },
+            h('h3', { className: 'text-sm font-medium text-gray-500 dark:text-gray-500 mb-3' }, '自定义标签'),
+            h('div', { className: 'flex flex-wrap gap-2 mb-4' },
+              customTags.map(tag =>
+                h('span', {
+                  key: tag,
+                  className: 'inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm'
+                },
+                  tag,
+                  h('button', {
+                    onClick: () => handleDeleteTag(tag),
+                    className: 'ml-1 hover:text-red-500'
+                  }, h(Icon, { name: 'x', size: 12 }))
+                )
+              ),
+              customTags.length === 0 && h('span', { className: 'text-gray-400 text-sm' }, '暂无自定义标签')
+            ),
+            h('div', { className: 'flex gap-2' },
+              h('input', {
+                value: newTag,
+                onChange: (e) => setNewTag(e.target.value),
+                onKeyDown: (e) => e.key === 'Enter' && handleAddTag(),
+                placeholder: '输入新标签名',
+                className: 'flex-1 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#16171d] text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500'
+              }),
+              h('button', {
+                onClick: handleAddTag,
+                className: 'px-4 py-2 rounded-xl bg-purple-500 text-white text-sm font-medium hover:bg-purple-600'
+              }, '添加')
+            )
+          )
+        ),
+
+        // 文章编辑器弹窗
+        showEditor && h('div', { className: 'fixed inset-0 bg-black/50 flex items-start justify-center z-50 overflow-y-auto py-8' },
+          h('div', { className: 'bg-white dark:bg-[#1e2028] rounded-2xl w-full max-w-3xl mx-4 shadow-xl' },
+            h('div', { className: 'flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700' },
+              h('h2', { className: 'text-lg font-semibold text-gray-900 dark:text-gray-100' },
+                editingPost ? '编辑文章' : '新建文章'
+              ),
+              h('button', {
+                onClick: () => setShowEditor(false),
+                className: 'p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+              }, h(Icon, { name: 'x', size: 20 }))
+            ),
+            h('div', { className: 'p-4 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto' },
+              h('div', null,
+                h('label', { className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1' }, '标题 *'),
+                h('input', {
+                  value: form.title,
+                  onChange: (e) => setForm({ ...form, title: e.target.value }),
+                  placeholder: '输入文章标题',
+                  className: 'w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#16171d] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500'
+                })
+              ),
+              h('div', { className: 'grid grid-cols-2 gap-4' },
+                h('div', null,
+                  h('label', { className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1' }, '发布日期'),
+                  h('input', {
+                    type: 'date',
+                    value: form.date,
+                    onChange: (e) => setForm({ ...form, date: e.target.value }),
+                    className: 'w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#16171d] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500'
+                  })
+                ),
+                h('div', null,
+                  h('label', { className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1' }, '作者'),
+                  h('input', {
+                    value: form.author,
+                    onChange: (e) => setForm({ ...form, author: e.target.value }),
+                    className: 'w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#16171d] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500'
+                  })
+                )
+              ),
+              h('div', null,
+                h('label', { className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1' }, '摘要 *'),
+                h('textarea', {
+                  value: form.excerpt,
+                  onChange: (e) => setForm({ ...form, excerpt: e.target.value }),
+                  placeholder: '输入文章摘要（列表页显示）',
+                  rows: 2,
+                  className: 'w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#16171d] text-gray-900 dark:text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500'
+                })
+              ),
+              h('div', null,
+                h('label', { className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1' },
+                  '标签（点击选择）'
+                ),
+                h('div', { className: 'flex flex-wrap gap-2' },
+                  effectiveTags.map(tag =>
+                    h('button', {
+                      key: tag,
+                      onClick: () => toggleFormTag(tag),
+                      className: `px-3 py-1 rounded-full text-sm font-medium transition-colors ${form.tags.includes(tag) ? 'bg-purple-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-purple-100 dark:hover:bg-purple-900/30'}`
+                    }, form.tags.includes(tag) ? h(Icon, { name: 'check', size: 12, className: 'inline mr-1' }) : null, tag)
+                  )
+                )
+              ),
+              h('div', null,
+                h('div', { className: 'flex items-center justify-between mb-1' },
+                  h('label', { className: 'text-sm font-medium text-gray-700 dark:text-gray-300' }, '正文内容（Markdown） *'),
+                  h('span', { className: 'text-xs text-gray-400' }, `约 ${calcReadingTime(form.content)} 分钟阅读`)
+                ),
+                h('textarea', {
+                  value: form.content,
+                  onChange: (e) => setForm({ ...form, content: e.target.value }),
+                  placeholder: '# 文章标题\n\n正文内容，支持 Markdown 语法...\n\n```js\nconst a = 1;\n```',
+                  rows: 14,
+                  className: 'w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#16171d] text-gray-900 dark:text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono text-sm leading-relaxed'
+                })
+              )
+            ),
+            h('div', { className: 'flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700' },
+              h('button', {
+                onClick: () => setShowEditor(false),
+                className: 'px-5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-800'
+              }, '取消'),
+              h('button', {
+                onClick: handleSave,
+                disabled: !form.title.trim() || !form.content.trim(),
+                className: 'flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed shadow-md'
+              }, h(Icon, { name: 'save', size: 16 }), '保存发布')
+            )
+          )
+        ),
+
+        // 删除确认弹窗
+        deleteConfirm && h('div', { className: 'fixed inset-0 bg-black/50 flex items-center justify-center z-50' },
+          h('div', { className: 'bg-white dark:bg-[#1e2028] rounded-2xl p-6 w-80 shadow-xl text-center' },
+            h('div', { className: 'w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4' },
+              h(Icon, { name: 'trash', size: 24, className: 'text-red-500' })
+            ),
+            h('h3', { className: 'text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2' }, '确认删除'),
+            h('p', { className: 'text-gray-500 dark:text-gray-500 mb-6' },
+              `确定要删除文章「${deleteConfirm.title}」吗？此操作不可恢复。`
+            ),
+            h('div', { className: 'flex gap-3' },
+              h('button', {
+                onClick: () => setDeleteConfirm(null),
+                className: 'flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 font-medium'
+              }, '取消'),
+              h('button', {
+                onClick: () => handleDelete(deleteConfirm.id),
+                className: 'flex-1 py-2.5 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600'
+              }, '删除')
+            )
+          )
+        )
+      );
+    };
+
+    // ==================== App ====================
+    const App = () => {
+      const [dark, setDark] = useState(() => {
+        const stored = localStorage.getItem('blog-dark');
+        if (stored !== null) return stored === 'true';
+        return window.matchMedia('(prefers-color-scheme: dark)').matches;
+      });
+      const [page, setPage] = useState('home');
+      const [param, setParam] = useState(null);
+      const [selectedTag, setSelectedTag] = useState(null);
+      const [posts, setPosts] = useState(() => loadPosts());
+
+      useEffect(() => {
+        if (dark) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+        localStorage.setItem('blog-dark', dark);
+      }, [dark]);
+
+      // Hash 路由
+      useEffect(() => {
+        const handleHash = () => {
+          const hash = window.location.hash.slice(1) || '/';
+          if (hash === '/' || hash === '') {
+            setPage('home');
+            setParam(null);
+          } else if (hash.startsWith('/post/')) {
+            setPage('post');
+            setParam(hash.replace('/post/', ''));
+          } else if (hash === '/tags') {
+            setPage('tags');
+          } else if (hash === '/about') {
+            setPage('about');
+          } else if (hash === '/admin') {
+            setPage('admin');
+          } else {
+            setPage('home');
+          }
+        };
+        window.addEventListener('hashchange', handleHash);
+        handleHash();
+        return () => window.removeEventListener('hashchange', handleHash);
+      }, []);
+
+      const navigate = (target, p) => {
+        if (target === 'home') {
+          window.location.hash = '/';
+          setPage('home');
+          setParam(null);
+          setSelectedTag(null);
+        } else if (target === 'post') {
+          window.location.hash = `/post/${p}`;
+          setPage('post');
+          setParam(p);
+        } else if (target === 'tags') {
+          window.location.hash = '/tags';
+          setPage('tags');
+          if (p) setSelectedTag(p);
+        } else if (target === 'about') {
+          window.location.hash = '/about';
+          setPage('about');
+        } else if (target === 'admin') {
+          window.location.hash = '/admin';
+          setPage('admin');
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+
+      const goBack = () => {
+        window.history.back();
+      };
+
+      return h('div', { className: 'min-h-screen flex flex-col bg-white dark:bg-[#16171d]' },
+        h(Header, { page, onNavigate: navigate, dark, onToggleDark: () => setDark(!dark), isAdmin: page === 'admin' }),
+        h('main', { className: 'flex-1' },
+          page === 'home' && h(HomePage, { onNavigate: navigate, posts }),
+          page === 'post' && h(PostPage, { postId: param, onBack: goBack, onNavigate: navigate, posts }),
+          page === 'tags' && h(TagsPage, { selectedTag, onSelectTag: (tag) => { setSelectedTag(tag); window.scrollTo({ top: 0 }); }, onNavigate: navigate, posts }),
+          page === 'about' && h(AboutPage),
+          page === 'admin' && h(AdminPage, {
+            posts,
+            setPosts,
+            allTags,
+            onNavigate: navigate,
+            onLogout: () => navigate('home')
+          })
+        ),
+        page !== 'admin' && h(Footer)
+      );
+    };
+
+    ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+  </script>
+</body>
+</html>
