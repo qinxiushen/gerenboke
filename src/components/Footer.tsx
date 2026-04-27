@@ -1,4 +1,4 @@
-import { Github, Heart } from 'lucide-react';
+import { GitHub, Heart } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -18,7 +18,7 @@ export default function Footer() {
               className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
               aria-label="GitHub"
             >
-              <Github className="w-5 h-5" />
+              <GitHub className="w-5 h-5" />
             </a>
           </div>
         </div>

@@ -385,7 +385,7 @@ export default function AdminPage() {
             { key: 'posts' as Tab, label: '文章管理', icon: FileText },
             { key: 'tags' as Tab, label: '标签管理', icon: Tag },
             { key: 'about' as Tab, label: '关于页面', icon: User },
-            { key: 'github' as Tab, label: 'GitHub', icon: Github },
+            { key: 'github' as Tab, label: 'GitHub', icon: GitHub },
             { key: 'password' as Tab, label: '修改密码', icon: Lock },
           ].map(({ key, label, icon: Icon }) => (
             <button
@@ -648,7 +648,7 @@ export default function AdminPage() {
           <div className="max-w-2xl">
             <div className="card p-6">
               <div className="flex items-center gap-3 mb-6">
-                <Github className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+                <GitHub className="w-6 h-6 text-gray-900 dark:text-gray-100" />
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">GitHub 连接</h2>
                   <p className="text-sm text-gray-500 dark:text-gray-400">连接后可直接从后台管理博客内容</p>
