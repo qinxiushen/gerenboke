@@ -13,3 +13,16 @@ export interface Tag {
   name: string;
   count: number;
 }
+
+export interface AdminData {
+  name: string;
+  bio: string;
+  avatar: string;
+  skills: {
+    frontend: string[];
+    backend: string[];
+    tools: string[];
+  };
+  github: string;
+  email: string;
+}

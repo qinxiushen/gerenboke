@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Settings, FileText, Tag, Lock, Save, Plus, Trash2, Edit2, X, Check, LogOut, ChevronRight } from 'lucide-react';
+import { Settings, FileText, Tag, Lock, Save, Plus, Trash2, Edit2, X, Check, LogOut, Github, RefreshCw, Upload, User, CheckCircle, AlertCircle } from 'lucide-react';
 import Layout from '../components/Layout';
 import { Post } from '../types';
 import {
@@ -17,8 +17,9 @@ import {
   setLoginStatus,
 } from '../data/admin';
 import { allTags as defaultTags } from '../data/posts';
+import { getGitHubProvider, defaultAdminData, AdminData, GitHubDataProvider } from '../data/githubData';
 
-type Tab = 'posts' | 'tags' | 'password';
+type Tab = 'posts' | 'tags' | 'password' | 'github' | 'about';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -43,17 +44,57 @@ export default function AdminPage() {
   const [pwdError, setPwdError] = useState('');
   const [pwdSuccess, setPwdSuccess] = useState('');
 
+  // GitHub 配置
+  const [githubToken, setGithubToken] = useState('');
+  const [isConnected, setIsConnected] = useState(false);
+  const [connectError, setConnectError] = useState('');
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isDeploying, setIsDeploying] = useState(false);
+
+  // 关于页面
+  const [adminData, setAdminData] = useState<AdminData>(defaultAdminData);
+  const [aboutSaving, setAboutSaving] = useState(false);
+
+  // 数据提供者
+  const [dataProvider, setDataProvider] = useState<GitHubDataProvider | null>(null);
+
   useEffect(() => {
-    // 检查登录状态
     if (sessionStorage.getItem('blog_admin_logged_in') === 'true') {
       setIsLoggedIn(true);
       loadData();
+      loadGitHubConfig();
     }
   }, []);
 
   const loadData = () => {
     setPosts(getPosts());
     setCustomTags(getCustomTags());
+  };
+
+  const loadGitHubConfig = () => {
+    const savedToken = localStorage.getItem('github_token');
+    if (savedToken) {
+      setGithubToken(savedToken);
+      testConnection(savedToken);
+    }
+  };
+
+  const testConnection = async (token: string) => {
+    try {
+      const provider = getGitHubProvider(token) as GitHubDataProvider;
+      const connected = await provider['service'].verifyConnection();
+      setIsConnected(connected);
+      if (connected) {
+        setDataProvider(provider);
+        setConnectError('');
+      } else {
+        setConnectError('无法连接到 GitHub，请检查 Token');
+      }
+    } catch {
+      setIsConnected(false);
+      setConnectError('Token 无效或已过期');
+    }
   };
 
   const handleLogin = () => {
@@ -73,38 +114,88 @@ export default function AdminPage() {
   };
 
   // 文章操作
-  const handleSavePost = (post: Post) => {
-    if (editingPost) {
-      updatePost(post);
+  const handleSavePost = async (post: Post) => {
+    if (dataProvider) {
+      setIsSyncing(true);
+      try {
+        await dataProvider.savePost(post);
+        setSyncMessage({ type: 'success', text: '文章已保存到 GitHub' });
+        loadData();
+        setEditingPost(null);
+        setIsCreating(false);
+      } catch (e: any) {
+        setSyncMessage({ type: 'error', text: e.message || '保存失败' });
+      } finally {
+        setIsSyncing(false);
+      }
     } else {
-      addPost(post);
+      if (editingPost) {
+        updatePost(post);
+      } else {
+        addPost(post);
+      }
+      setEditingPost(null);
+      setIsCreating(false);
+      loadData();
+      setSyncMessage({ type: 'error', text: '未连接 GitHub，仅本地保存' });
     }
-    setEditingPost(null);
-    setIsCreating(false);
+  };
+
+  const handleDeletePost = async (id: string) => {
+    if (!confirm('确定要删除这篇文章吗？')) return;
+    
+    if (dataProvider) {
+      setIsSyncing(true);
+      try {
+        await dataProvider.deletePost(id);
+        setSyncMessage({ type: 'success', text: '文章已从 GitHub 删除' });
+      } catch (e: any) {
+        setSyncMessage({ type: 'error', text: e.message || '删除失败' });
+      } finally {
+        setIsSyncing(false);
+      }
+    }
+    deletePost(id);
     loadData();
   };
 
-  const handleDeletePost = (id: string) => {
-    if (confirm('确定要删除这篇文章吗？')) {
-      deletePost(id);
-      loadData();
-    }
-  };
-
   // 标签操作
-  const handleAddTag = () => {
-    if (newTag.trim() && !defaultTags.includes(newTag.trim()) && !customTags.includes(newTag.trim())) {
-      addCustomTag(newTag.trim());
-      setNewTag('');
-      loadData();
+  const handleAddTag = async () => {
+    if (!newTag.trim()) return;
+    if ([...defaultTags, ...customTags].includes(newTag.trim())) return;
+
+    if (dataProvider) {
+      setIsSyncing(true);
+      try {
+        await dataProvider.saveTags([...customTags, newTag.trim()]);
+        setSyncMessage({ type: 'success', text: '标签已保存到 GitHub' });
+      } catch {
+        setSyncMessage({ type: 'error', text: '保存失败' });
+      } finally {
+        setIsSyncing(false);
+      }
     }
+    addCustomTag(newTag.trim());
+    setNewTag('');
+    loadData();
   };
 
-  const handleDeleteTag = (tag: string) => {
-    if (confirm(`确定要删除标签 "${tag}" 吗？`)) {
-      deleteCustomTag(tag);
-      loadData();
+  const handleDeleteTag = async (tag: string) => {
+    if (!confirm(`确定要删除标签 "${tag}" 吗？`)) return;
+
+    if (dataProvider) {
+      setIsSyncing(true);
+      try {
+        await dataProvider.saveTags(customTags.filter(t => t !== tag));
+        setSyncMessage({ type: 'success', text: '标签已从 GitHub 删除' });
+      } catch {
+        setSyncMessage({ type: 'error', text: '删除失败' });
+      } finally {
+        setIsSyncing(false);
+      }
     }
+    deleteCustomTag(tag);
+    loadData();
   };
 
   // 密码修改
@@ -132,6 +223,59 @@ export default function AdminPage() {
     setCurrentPwd('');
     setNewPwd('');
     setConfirmPwd('');
+  };
+
+  // GitHub 连接
+  const handleConnectGitHub = async () => {
+    if (!githubToken.trim()) {
+      setConnectError('请输入 Token');
+      return;
+    }
+    setConnectError('');
+    localStorage.setItem('github_token', githubToken.trim());
+    await testConnection(githubToken.trim());
+  };
+
+  const handleDisconnectGitHub = () => {
+    localStorage.removeItem('github_token');
+    setGithubToken('');
+    setIsConnected(false);
+    setDataProvider(null);
+    setConnectError('');
+  };
+
+  const handleDeploy = async () => {
+    if (!dataProvider) {
+      setSyncMessage({ type: 'error', text: '请先连接 GitHub' });
+      return;
+    }
+    setIsDeploying(true);
+    try {
+      await dataProvider.triggerDeploy();
+      setSyncMessage({ type: 'success', text: '部署已触发！博客将在几分钟后更新...' });
+    } catch (e: any) {
+      setSyncMessage({ type: 'error', text: e.message || '部署触发失败' });
+    } finally {
+      setIsDeploying(false);
+    }
+  };
+
+  // 关于页面保存
+  const handleSaveAbout = async () => {
+    if (dataProvider) {
+      setAboutSaving(true);
+      try {
+        await dataProvider.saveAdmin(adminData);
+        setSyncMessage({ type: 'success', text: '关于页面已保存到 GitHub' });
+      } catch (e: any) {
+        setSyncMessage({ type: 'error', text: e.message || '保存失败' });
+      } finally {
+        setAboutSaving(false);
+      }
+    } else {
+      localStorage.setItem('admin_data', JSON.stringify(adminData));
+      setSyncMessage({ type: 'error', text: '未连接 GitHub，仅本地保存' });
+    }
   };
 
   // 登录页面
@@ -193,26 +337,61 @@ export default function AdminPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">管理后台</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">管理文章、标签和设置</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {isConnected ? (
+                  <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3" /> 已连接 GitHub
+                  </span>
+                ) : (
+                  <span className="text-orange-500">未连接 GitHub</span>
+                )}
+              </p>
             </div>
           </div>
-          <button onClick={handleLogout} className="btn btn-ghost flex items-center gap-2">
-            <LogOut className="w-4 h-4" />
-            退出登录
-          </button>
+          <div className="flex items-center gap-2">
+            {isConnected && (
+              <button
+                onClick={handleDeploy}
+                disabled={isDeploying}
+                className="btn btn-primary flex items-center gap-2"
+              >
+                <Upload className="w-4 h-4" />
+                {isDeploying ? '发布中...' : '发布博客'}
+              </button>
+            )}
+            <button onClick={handleLogout} className="btn btn-ghost flex items-center gap-2">
+              <LogOut className="w-4 h-4" />
+              退出
+            </button>
+          </div>
         </div>
 
+        {/* 同步消息 */}
+        {syncMessage && (
+          <div className={`mb-4 p-3 rounded-lg flex items-center gap-2 ${
+            syncMessage.type === 'success' 
+              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+              : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+          }`}>
+            {syncMessage.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+            {syncMessage.text}
+            <button onClick={() => setSyncMessage(null)} className="ml-auto"><X className="w-4 h-4" /></button>
+          </div>
+        )}
+
         {/* 标签页 */}
-        <div className="flex gap-2 mb-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex gap-2 mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
           {[
             { key: 'posts' as Tab, label: '文章管理', icon: FileText },
             { key: 'tags' as Tab, label: '标签管理', icon: Tag },
+            { key: 'about' as Tab, label: '关于页面', icon: User },
+            { key: 'github' as Tab, label: 'GitHub', icon: Github },
             { key: 'password' as Tab, label: '修改密码', icon: Lock },
           ].map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               onClick={() => setActiveTab(key)}
-              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === key
                   ? 'border-purple-500 text-purple-600 dark:text-purple-400'
                   : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
@@ -250,7 +429,6 @@ export default function AdminPage() {
               </button>
             </div>
 
-            {/* 新建/编辑文章 */}
             {(isCreating || editingPost) && (
               <PostEditor
                 post={editingPost!}
@@ -259,10 +437,10 @@ export default function AdminPage() {
                   setIsCreating(false);
                   setEditingPost(null);
                 }}
+                isSyncing={isSyncing}
               />
             )}
 
-            {/* 文章列表 */}
             <div className="space-y-3">
               {posts.length === 0 ? (
                 <p className="text-gray-500 dark:text-gray-400 text-center py-8">暂无文章</p>
@@ -311,12 +489,11 @@ export default function AdminPage() {
         {/* 标签管理 */}
         {activeTab === 'tags' && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">内置标签</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">内置标签（不可删除）</h2>
             <div className="flex flex-wrap gap-2 mb-8">
               {defaultTags.map((tag) => (
                 <span key={tag} className="tag-chip bg-gray-100 dark:bg-gray-800">
                   {tag}
-                  <X className="w-3 h-3 opacity-50" />
                 </span>
               ))}
             </div>
@@ -352,6 +529,196 @@ export default function AdminPage() {
                   </span>
                 ))
               )}
+            </div>
+          </div>
+        )}
+
+        {/* 关于页面 */}
+        {activeTab === 'about' && (
+          <div className="max-w-2xl">
+            <div className="card p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">关于页面设置</h2>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">昵称</label>
+                    <input
+                      type="text"
+                      value={adminData.name}
+                      onChange={(e) => setAdminData({ ...adminData, name: e.target.value })}
+                      className="input w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">头像字母</label>
+                    <input
+                      type="text"
+                      value={adminData.avatar}
+                      onChange={(e) => setAdminData({ ...adminData, avatar: e.target.value })}
+                      className="input w-full"
+                      maxLength={1}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">简介</label>
+                  <input
+                    type="text"
+                    value={adminData.bio}
+                    onChange={(e) => setAdminData({ ...adminData, bio: e.target.value })}
+                    className="input w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">GitHub 链接</label>
+                  <input
+                    type="url"
+                    value={adminData.github}
+                    onChange={(e) => setAdminData({ ...adminData, github: e.target.value })}
+                    className="input w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">邮箱</label>
+                  <input
+                    type="email"
+                    value={adminData.email}
+                    onChange={(e) => setAdminData({ ...adminData, email: e.target.value })}
+                    className="input w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">前端技能</label>
+                  <input
+                    type="text"
+                    value={adminData.skills.frontend.join(', ')}
+                    onChange={(e) => setAdminData({
+                      ...adminData,
+                      skills: { ...adminData.skills, frontend: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }
+                    })}
+                    className="input w-full"
+                    placeholder="用逗号分隔"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">后端技能</label>
+                  <input
+                    type="text"
+                    value={adminData.skills.backend.join(', ')}
+                    onChange={(e) => setAdminData({
+                      ...adminData,
+                      skills: { ...adminData.skills, backend: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }
+                    })}
+                    className="input w-full"
+                    placeholder="用逗号分隔"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">效率工具</label>
+                  <input
+                    type="text"
+                    value={adminData.skills.tools.join(', ')}
+                    onChange={(e) => setAdminData({
+                      ...adminData,
+                      skills: { ...adminData.skills, tools: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }
+                    })}
+                    className="input w-full"
+                    placeholder="用逗号分隔"
+                  />
+                </div>
+
+                <button onClick={handleSaveAbout} className="btn btn-primary w-full flex items-center justify-center gap-2">
+                  <Save className="w-4 h-4" />
+                  {aboutSaving ? '保存中...' : '保存关于页面'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* GitHub 配置 */}
+        {activeTab === 'github' && (
+          <div className="max-w-2xl">
+            <div className="card p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <Github className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">GitHub 连接</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">连接后可直接从后台管理博客内容</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Personal Access Token
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="password"
+                      value={githubToken}
+                      onChange={(e) => setGithubToken(e.target.value)}
+                      placeholder="ghp_xxxxxxxxxxxx"
+                      className="input flex-1"
+                      disabled={isConnected}
+                    />
+                    {isConnected ? (
+                      <button onClick={handleDisconnectGitHub} className="btn btn-ghost text-red-500">
+                        断开
+                      </button>
+                    ) : (
+                      <button onClick={handleConnectGitHub} className="btn btn-primary flex items-center gap-2">
+                        <RefreshCw className="w-4 h-4" />
+                        连接
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    需要 repo 权限。{' '}
+                    <a
+                      href="https://github.com/settings/tokens/new?scopes=repo"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-purple-600 hover:underline"
+                    >
+                      去生成 Token →
+                    </a>
+                  </p>
+                </div>
+
+                {connectError && (
+                  <p className="text-red-500 text-sm">{connectError}</p>
+                )}
+
+                {isConnected && (
+                  <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                    <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
+                      <CheckCircle className="w-5 h-5" />
+                      <span className="font-medium">已成功连接到 qinxiushen/gerenboke</span>
+                    </div>
+                    <p className="text-sm text-green-600 dark:text-green-500 mt-1">
+                      保存文章、标签或关于页面后，点击「发布博客」即可更新网站
+                    </p>
+                  </div>
+                )}
+
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">使用方法</h3>
+                  <ol className="text-sm text-gray-600 dark:text-gray-400 space-y-1 list-decimal list-inside">
+                    <li>在 GitHub 生成 Personal Access Token（需要 repo 权限）</li>
+                    <li>将 Token 粘贴到上方输入框并点击「连接」</li>
+                    <li>连接成功后，编辑文章、标签或关于页面</li>
+                    <li>点击「保存」后，再点击「发布博客」即可更新网站</li>
+                  </ol>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -422,21 +789,17 @@ export default function AdminPage() {
 }
 
 // 文章编辑器组件
-function PostEditor({ post, onSave, onCancel }: { post: Post; onSave: (post: Post) => void; onCancel: () => void }) {
+function PostEditor({ post, onSave, onCancel, isSyncing }: { post: Post; onSave: (post: Post) => void; onCancel: () => void; isSyncing: boolean }) {
   const [form, setForm] = useState<Post>({ ...post });
   const allTagOptions = [...new Set([...defaultTags, ...getCustomTags()])];
   const [selectedTags, setSelectedTags] = useState<string[]>(post.tags || []);
 
   const handleTagToggle = (tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    );
-    setForm((prev) => ({
-      ...prev,
-      tags: selectedTags.includes(tag)
-        ? selectedTags.filter((t) => t !== tag)
-        : [...selectedTags, tag],
-    }));
+    const newTags = selectedTags.includes(tag)
+      ? selectedTags.filter((t) => t !== tag)
+      : [...selectedTags, tag];
+    setSelectedTags(newTags);
+    setForm((prev) => ({ ...prev, tags: newTags }));
   };
 
   const handleSave = () => {
@@ -531,9 +894,9 @@ function PostEditor({ post, onSave, onCancel }: { post: Post; onSave: (post: Pos
           <button onClick={onCancel} className="btn btn-ghost">
             取消
           </button>
-          <button onClick={handleSave} className="btn btn-primary flex items-center gap-2">
+          <button onClick={handleSave} disabled={isSyncing} className="btn btn-primary flex items-center gap-2">
             <Save className="w-4 h-4" />
-            保存
+            {isSyncing ? '保存中...' : '保存'}
           </button>
         </div>
       </div>
