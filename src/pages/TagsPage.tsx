@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Tag, ArrowRight, ArrowLeft } from 'lucide-react';
 import Layout from '../components/Layout';
-import { Post } from '../types';
+import type { Post } from '../types';
 import { posts as defaultPosts, allTags as defaultTags } from '../data/posts';
 import { getPosts, getCustomTags } from '../data/admin';
 

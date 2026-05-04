@@ -1,6 +1,7 @@
-import { Post } from '../types';
+import type { Post } from '../types';
 import { posts as defaultPosts, allTags as defaultTags } from './posts';
-import { createGitHubService, GitHubConfig } from '../services/githubApi';
+import { createGitHubService } from '../services/githubApi';
+import type { GitHubConfig } from '../services/githubApi';
 
 const POSTS_PATH = 'src/data/posts.ts';
 const ADMIN_PATH = 'src/data/admin.ts';
@@ -40,28 +41,7 @@ export const defaultAdminData: AdminData = {
   email: 'hello@example.com',
 };
 
-const generatePostsFileContent = (posts: Post[], tags: string[]): string => {
-  const postsJson = posts.map((post) => `  {
-    id: '${post.id}',
-    title: '${post.title.replace(/'/g, "\\'")}',
-    date: '${post.date}',
-    excerpt: '${post.excerpt.replace(/'/g, "\\'")}',
-    tags: [${post.tags.map((t) => `'${t}'`).join(', ')}],
-    author: '${post.author}',
-    readingTime: ${post.readingTime},
-    content: \`${post.content.replace(/`/g, '\\`').replace(/\${/g, '\\${')}\`
-  }`);
-
-  return `import { Post } from '../types';
-
-export const posts: Post[] = [
-${postsJson.join(',\n')}
-];
-
-export const allTags: string[] = [${tags.map((t) => `'${t}'`).join(', ')}];
-`;
-};
-
+// AdminData generated from defaultAdminData
 const generateAdminFileContent = (admin: AdminData): string => {
   return `import { AdminData } from '../types';
 
@@ -71,13 +51,9 @@ export const adminData: AdminData = ${JSON.stringify(admin, null, 2)};
 
 export class GitHubDataProvider implements DataProvider {
   private service: ReturnType<typeof createGitHubService>;
-  private owner: string;
-  private repo: string;
 
   constructor(config: Omit<GitHubConfig, 'branch'>) {
     this.service = createGitHubService({ ...config, branch: 'main' });
-    this.owner = config.owner;
-    this.repo = config.repo;
   }
 
   async getPosts(): Promise<Post[]> {

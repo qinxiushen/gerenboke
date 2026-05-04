@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Settings, FileText, Tag, Lock, Save, Plus, Trash2, Edit2, X, Check, LogOut, GitHub, RefreshCw, Upload, User, CheckCircle, AlertCircle } from 'lucide-react';
+import { Settings, FileText, Tag, Lock, Save, Plus, Trash2, Edit2, X, Check, LogOut, RefreshCw, Upload, User, CheckCircle, AlertCircle } from 'lucide-react';
+import { Github } from '../components/GithubIcon';
 import Layout from '../components/Layout';
 import type { Post } from '../types';
 import {
@@ -11,13 +12,14 @@ import {
   getCustomTags,
   addCustomTag,
   deleteCustomTag,
-  getPassword,
   setPassword,
   verifyPassword,
   setLoginStatus,
 } from '../data/admin';
 import { allTags as defaultTags } from '../data/posts';
-import { getGitHubProvider, defaultAdminData, AdminData, GitHubDataProvider } from '../data/githubData';
+import { getGitHubProvider, defaultAdminData } from '../data/githubData';
+import type { AdminData } from '../data/githubData';
+import type { GitHubDataProvider } from '../data/githubData';
 
 type Tab = 'posts' | 'tags' | 'password' | 'github' | 'about';
 
@@ -385,7 +387,7 @@ export default function AdminPage() {
             { key: 'posts' as Tab, label: '文章管理', icon: FileText },
             { key: 'tags' as Tab, label: '标签管理', icon: Tag },
             { key: 'about' as Tab, label: '关于页面', icon: User },
-            { key: 'github' as Tab, label: 'GitHub', icon: GitHub },
+            { key: 'github' as Tab, label: 'GitHub', icon: Github },
             { key: 'password' as Tab, label: '修改密码', icon: Lock },
           ].map(({ key, label, icon: Icon }) => (
             <button
@@ -648,7 +650,7 @@ export default function AdminPage() {
           <div className="max-w-2xl">
             <div className="card p-6">
               <div className="flex items-center gap-3 mb-6">
-                <GitHub className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+                <Github className="w-6 h-6 text-gray-900 dark:text-gray-100" />
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">GitHub 连接</h2>
                   <p className="text-sm text-gray-500 dark:text-gray-400">连接后可直接从后台管理博客内容</p>

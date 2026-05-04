@@ -1,4 +1,4 @@
-import { Post } from '../types';
+import type { Post } from '../types';
 
 const STORAGE_KEY = 'blog_admin_password';
 const POSTS_KEY = 'blog_posts';

@@ -1,5 +1,6 @@
 import Layout from '../components/Layout';
-import { Github, Mail, Heart, Terminal, Code2, Coffee } from 'lucide-react';
+import { Mail, Heart, Terminal, Code2, Coffee } from 'lucide-react';
+import { Github } from '../components/GithubIcon';
 
 const skills = [
   { icon: Code2, name: '前端开发', desc: 'React / Vue / TypeScript' },

@@ -5,7 +5,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import { Calendar, Clock, ArrowLeft, Tag } from 'lucide-react';
 import Layout from '../components/Layout';
-import { Post } from '../types';
+import type { Post } from '../types';
 import { posts as defaultPosts } from '../data/posts';
 import { getPosts } from '../data/admin';
 import 'highlight.js/styles/github-dark.css';

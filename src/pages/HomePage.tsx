@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Clock, Tag, ArrowRight } from 'lucide-react';
 import Layout from '../components/Layout';
-import { Post } from '../types';
+import type { Post } from '../types';
 import { posts as defaultPosts } from '../data/posts';
 import { getPosts } from '../data/admin';
 
