@@ -35,12 +35,17 @@ export class GitHubApiService {
       },
     });
 
+    const text = await response.text();
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `GitHub API error: ${response.status}`);
+      try {
+        const error = JSON.parse(text);
+        throw new Error(error.message || `GitHub API error: ${response.status}`);
+      } catch {
+        throw new Error(`GitHub API error: ${response.status}`);
+      }
     }
 
-    return response.json();
+    return JSON.parse(text);
   }
 
   async getFileContent(path: string): Promise<FileContent> {
