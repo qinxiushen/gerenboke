@@ -139,7 +139,7 @@ export default function AdminPage() {
       setEditingPost(null);
       setIsCreating(false);
       loadData();
-      setSyncMessage({ type: 'error', text: '未连接 GitHub，仅本地保存' });
+      setSyncMessage({ type: 'success', text: '文章已保存到本地（未连接 GitHub）' });
     }
   };
 
