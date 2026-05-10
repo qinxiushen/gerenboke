@@ -1,7 +1,7 @@
 import { AdminData } from '../types';
 
 export const adminData: AdminData = {
-  "name": "秦修身",
+  "name": "修身",
   "bio": "全栈开发 / 技术写作者",
   "avatar": "B",
   "skills": {
