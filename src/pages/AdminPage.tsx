@@ -16,7 +16,7 @@ import {
   verifyPassword,
   setLoginStatus,
 } from '../data/admin';
-import { allTags as defaultTags } from '../data/posts';
+import { fallbackTags as defaultTags } from '../data/fallback';
 import { getGitHubProvider, defaultAdminData } from '../data/githubData';
 import type { AdminData } from '../data/githubData';
 import type { GitHubDataProvider } from '../data/githubData';

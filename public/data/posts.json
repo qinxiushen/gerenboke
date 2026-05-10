@@ -1,0 +1,15 @@
+[
+  {
+    "id": "1",
+    "title": "React 18 新特性",
+    "date": "2026-04-20",
+    "excerpt": "React 18 带来了 Concurrent Rendering、Suspense 改进等新特性",
+    "tags": [
+      "React",
+      "前端"
+    ],
+    "author": "博主",
+    "readingTime": 8,
+    "content": "# React 18 新特性\n\nReact 18 是 React 17 之后的重要更新..."
+  }
+]

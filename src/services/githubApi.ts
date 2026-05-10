@@ -40,9 +40,17 @@ export class GitHubApiService {
       try {
         const error = JSON.parse(text);
         throw new Error(error.message || `GitHub API error: ${response.status}`);
-      } catch {
+      } catch (e) {
+        if (e instanceof SyntaxError) {
+          throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+        }
         throw new Error(`GitHub API error: ${response.status}`);
       }
+    }
+
+    // Handle 204 No Content or empty response
+    if (!text) {
+      return {} as T;
     }
 
     return JSON.parse(text);

@@ -1,9 +1,10 @@
 import type { Post } from '../types';
-import { posts as defaultPosts, allTags as defaultTags } from './posts';
+import { fallbackPosts, fallbackTags } from './fallback';
 import { createGitHubService } from '../services/githubApi';
 import type { GitHubConfig } from '../services/githubApi';
 
-const POSTS_PATH = 'src/data/posts.ts';
+const POSTS_PATH = 'public/data/posts.json';
+const TAGS_PATH = 'public/data/tags.json';
 const ADMIN_PATH = 'src/data/admin.ts';
 
 export interface DataProvider {
@@ -41,9 +42,8 @@ export const defaultAdminData: AdminData = {
   email: 'hello@example.com',
 };
 
-// AdminData generated from defaultAdminData
 const generateAdminFileContent = (admin: AdminData): string => {
-  return `import { AdminData } from '../types';
+  return `import type { AdminData } from '../types';
 
 export const adminData: AdminData = ${JSON.stringify(admin, null, 2)};
 `;
@@ -59,90 +59,89 @@ export class GitHubDataProvider implements DataProvider {
   async getPosts(): Promise<Post[]> {
     try {
       const file = await this.service.getFileContent(POSTS_PATH);
-      const content = file.content;
-      const match = content.match(/export const posts: Post\[\] = \[([\s\S]*?)\];\s*export const allTags/);
-      if (!match) return defaultPosts;
-      return defaultPosts;
+      return JSON.parse(file.content);
     } catch {
-      return defaultPosts;
+      return fallbackPosts;
     }
   }
 
   async getTags(): Promise<string[]> {
     try {
-      const file = await this.service.getFileContent(POSTS_PATH);
-      const content = file.content;
-      const match = content.match(/export const allTags: string\[\] = \[(.*?)\];/);
-      if (match) {
-        return match[1].split(',').map((t: string) => t.trim().replace(/'/g, ''));
-      }
-      return defaultTags;
+      const file = await this.service.getFileContent(TAGS_PATH);
+      const tags: string[] = JSON.parse(file.content);
+      return tags;
     } catch {
-      return defaultTags;
+      return fallbackTags;
     }
   }
 
   async savePost(post: Post): Promise<void> {
-    const file = await this.service.getFileContent(POSTS_PATH);
-    const content = file.content;
-
-    let newContent: string;
-    const existingPostMatch = content.match(
-      new RegExp(`  \\{\\s*id: '${post.id}',[^}]+\\},?\\s*\\]`, 'm')
-    );
-
-    const postEntry = `  {
-    id: '${post.id}',
-    title: '${post.title.replace(/'/g, "\\'")}',
-    date: '${post.date}',
-    excerpt: '${post.excerpt.replace(/'/g, "\\'")}',
-    tags: [${post.tags.map((t) => `'${t}'`).join(', ')}],
-    author: '${post.author}',
-    readingTime: ${post.readingTime},
-    content: \`${post.content.replace(/`/g, '\\`').replace(/\${/g, '\\${')}\`
-  }`;
-
-    if (existingPostMatch) {
-      newContent = content.replace(existingPostMatch[0], postEntry);
-    } else {
-      const insertPoint = content.lastIndexOf('];');
-      newContent = content.slice(0, insertPoint) + ',\n' + postEntry + '\n' + content.slice(insertPoint);
+    // Get current posts
+    let posts: Post[] = [];
+    try {
+      const file = await this.service.getFileContent(POSTS_PATH);
+      posts = JSON.parse(file.content);
+      const sha = file.sha;
+      
+      // Update or add post
+      const index = posts.findIndex(p => p.id === post.id);
+      if (index >= 0) {
+        posts[index] = post;
+      } else {
+        posts.unshift(post);
+      }
+      
+      await this.service.updateFile(
+        POSTS_PATH,
+        JSON.stringify(posts, null, 2),
+        sha,
+        `Update post: ${post.title}`
+      );
+    } catch (e) {
+      // File doesn't exist, create it
+      await this.service.updateFile(
+        POSTS_PATH,
+        JSON.stringify([post], null, 2),
+        '',
+        `Create posts.json with: ${post.title}`
+      );
     }
-
-    await this.service.updateFile(
-      POSTS_PATH,
-      newContent,
-      file.sha,
-      `Update post: ${post.title}`
-    );
   }
 
   async deletePost(id: string): Promise<void> {
-    const file = await this.service.getFileContent(POSTS_PATH);
-    const content = file.content;
-    const regex = new RegExp(`  \\{\\s*id: '${id}',[\\s\\S]*?\\},?\\s*(?=\\[|export)`, 'm');
-    const newContent = content.replace(regex, '');
-    await this.service.updateFile(
-      POSTS_PATH,
-      newContent,
-      file.sha,
-      `Delete post: ${id}`
-    );
+    try {
+      const file = await this.service.getFileContent(POSTS_PATH);
+      const posts: Post[] = JSON.parse(file.content);
+      const newPosts = posts.filter(p => p.id !== id);
+      
+      await this.service.updateFile(
+        POSTS_PATH,
+        JSON.stringify(newPosts, null, 2),
+        file.sha,
+        `Delete post: ${id}`
+      );
+    } catch {
+      // Ignore if file doesn't exist
+    }
   }
 
   async saveTags(tags: string[]): Promise<void> {
-    const file = await this.service.getFileContent(POSTS_PATH);
-    const content = file.content;
-    const newContent = content.replace(
-      /export const allTags: string\[\] = \[.*?\];/,
-      `export const allTags: string[] = [${tags.map((t) => `'${t}'`).join(', ')}];`
-    );
-    await this.service.updateFile(
-      POSTS_PATH,
-      newContent,
-      file.sha,
-      `Update tags: ${tags.join(', ')}`
-    );
+    try {
+      const file = await this.service.getFileContent(TAGS_PATH);
+      await this.service.updateFile(
+        TAGS_PATH,
+        JSON.stringify(tags, null, 2),
+        file.sha,
+        `Update tags: ${tags.join(', ')}`
+      );
+    } catch {
+      await this.service.updateFile(
+        TAGS_PATH,
+        JSON.stringify(tags, null, 2),
+        '',
+        `Create tags.json`
+      );
+    }
   }
 
   async triggerDeploy(): Promise<void> {
@@ -179,8 +178,8 @@ export const getGitHubProvider = (token: string): DataProvider => {
 };
 
 export const useLocalData = (): DataProvider => ({
-  getPosts: async () => defaultPosts,
-  getTags: async () => defaultTags,
+  getPosts: async () => fallbackPosts,
+  getTags: async () => fallbackTags,
   savePost: async () => { throw new Error('Local mode: save not supported'); },
   deletePost: async () => { throw new Error('Local mode: delete not supported'); },
   saveTags: async () => { throw new Error('Local mode: save not supported'); },

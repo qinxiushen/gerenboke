@@ -3,7 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { Tag, ArrowRight, ArrowLeft } from 'lucide-react';
 import Layout from '../components/Layout';
 import type { Post } from '../types';
-import { posts as defaultPosts, allTags as defaultTags } from '../data/posts';
+import { fallbackPosts as defaultPosts, fallbackTags as defaultTags } from '../data/fallback';
 import { getPosts, getCustomTags } from '../data/admin';
 
 export default function TagsPage() {
